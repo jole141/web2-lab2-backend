@@ -1,8 +1,10 @@
 import express, { Express } from "express";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 import cors from "cors";
 import nocache from "nocache";
 import { errorHandler } from "./src/middlewares/error.middleware";
+import { DB } from "./src/datasource";
 
 dotenv.config();
 
@@ -27,9 +29,19 @@ server.use(
   })
 );
 
-// add controllers
-server.use("/", (req, res) => {
-  res.json({ message: "Hello World!" });
+server.use("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = DB.find((user) => user.email === email);
+  if (!user) {
+    res.status(401).json({ message: "Bad credentials" });
+    return;
+  }
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    res.status(401).json({ message: "Bad credentials" });
+    return;
+  }
+  res.json({ message: "Login Successfully" });
 });
 
 server.use(errorHandler);
