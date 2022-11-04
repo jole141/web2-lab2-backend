@@ -6,6 +6,7 @@
 /cosmos-export
 /dist
 /dts
+.idea
 
 # misc
 .DS_Store
