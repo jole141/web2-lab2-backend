@@ -4,7 +4,9 @@ import bcrypt from "bcrypt";
 import cors from "cors";
 import nocache from "nocache";
 import { errorHandler } from "./src/middlewares/error.middleware";
-import { DB } from "./src/datasource";
+import { DB_USER } from "./src/datasource";
+import { addFailedAttempt, generateJWT } from "./src/utils";
+import { brokenAuthSecure } from "./src/middlewares/broken-auth-secure.middleware";
 
 dotenv.config();
 
@@ -30,8 +32,8 @@ server.use(
 );
 
 server.use("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const user = DB.find((user) => user.email === email);
+  const { username, password } = req.body;
+  const user = DB_USER.find((user) => user.username === username);
   if (!user) {
     res.status(401).json({ message: "Bad credentials" });
     return;
@@ -41,7 +43,28 @@ server.use("/login", async (req, res) => {
     res.status(401).json({ message: "Bad credentials" });
     return;
   }
-  res.json({ message: "Login Successfully" });
+  res.json({
+    token: generateJWT(username, user.email),
+  });
+});
+
+server.use("/login-secure", brokenAuthSecure, async (req, res) => {
+  const { username, password } = req.body;
+  const user = DB_USER.find((user) => user.username === username);
+  if (!user) {
+    addFailedAttempt(req.ip);
+    res.status(401).json({ message: "Bad credentials" });
+    return;
+  }
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    addFailedAttempt(req.ip);
+    res.status(401).json({ message: "Bad credentials" });
+    return;
+  }
+  res.json({
+    token: generateJWT(username, user.email),
+  });
 });
 
 server.use(errorHandler);
