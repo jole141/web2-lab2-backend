@@ -6,6 +6,7 @@ import { ICheckResult } from "./types";
 dotenv.config();
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET || "";
+const TIMEOUT = process.env.TOKEN_SECRET || "10";
 
 export const checkFailedAttempts = (ip: string): ICheckResult => {
   const optionalIPData = DB_IP_DATA.find((data) => data.ip === ip);
@@ -17,7 +18,7 @@ export const checkFailedAttempts = (ip: string): ICheckResult => {
     const timeDifference =
       new Date().getTime() - optionalIPData.lastAttempt.getTime();
     const minutes = Math.floor(timeDifference / 60000);
-    if (minutes < 1) {
+    if (minutes < parseInt(TIMEOUT, 10)) {
       return { message: "Too many failed attempts", code: 429 };
     } else {
       DB_IP_DATA.splice(DB_IP_DATA.indexOf(optionalIPData), 1);
