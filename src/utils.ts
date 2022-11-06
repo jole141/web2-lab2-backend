@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { DB_IP_DATA } from "./datasource";
+import { DB_COMMENTS, DB_IP_DATA } from "./datasource";
 import dotenv from "dotenv";
 import { ICheckResult } from "./types";
 
@@ -15,9 +15,8 @@ export const checkFailedAttempts = (ip: string): ICheckResult => {
   }
 
   if (optionalIPData.attempts >= 3) {
-    const timeDifference =
-      new Date().getTime() - optionalIPData.lastAttempt.getTime();
-    const minutes = Math.floor(timeDifference / 60000);
+    const diff = new Date().getTime() - optionalIPData.lastAttempt.getTime();
+    const minutes = Math.floor(diff / 60000);
     if (minutes < parseInt(TIMEOUT, 10)) {
       return { message: "Too many failed attempts", code: 429 };
     } else {
@@ -41,6 +40,13 @@ export const addFailedAttempt = (ip: string) => {
     optionalIPData.attempts++;
     optionalIPData.lastAttempt = new Date();
   }
+};
+
+export const addComment = (text: string) => {
+  DB_COMMENTS.push({
+    id: DB_COMMENTS.length + 1,
+    text,
+  });
 };
 
 export const generateJWT = (username: string, email: string) => {

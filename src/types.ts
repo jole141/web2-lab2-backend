@@ -17,3 +17,8 @@ export interface IPData {
   attempts: number;
   lastAttempt: Date;
 }
+
+export interface IComment {
+  id: number;
+  text: string;
+}

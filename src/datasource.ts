@@ -1,4 +1,15 @@
-import { IPData, User } from "./types";
+import { IComment, IPData, User } from "./types";
+
+export const initalComments: IComment[] = [
+  {
+    id: 1,
+    text: "<b>Ovo je komentar</b>",
+  },
+  {
+    id: 2,
+    text: "Ovo je još jedan komentar",
+  },
+];
 
 export let DB_USER: User[] = [
   {
@@ -25,3 +36,5 @@ export let DB_USER: User[] = [
 ];
 
 export let DB_IP_DATA: IPData[] = [];
+
+export let DB_COMMENTS: IComment[] = [initalComments[0], initalComments[1]];

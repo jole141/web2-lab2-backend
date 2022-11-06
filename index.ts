@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import cors from "cors";
 import nocache from "nocache";
 import { errorHandler } from "./src/middlewares/error.middleware";
-import { DB_USER } from "./src/datasource";
+import { DB_COMMENTS, DB_USER, initalComments } from "./src/datasource";
 import { addFailedAttempt, generateJWT } from "./src/utils";
 import { brokenAuthSecure } from "./src/middlewares/broken-auth-secure.middleware";
 
@@ -31,7 +31,7 @@ server.use(
   })
 );
 
-server.use("/login", async (req, res) => {
+server.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = DB_USER.find((user) => user.username === username);
   if (!user) {
@@ -48,7 +48,7 @@ server.use("/login", async (req, res) => {
   });
 });
 
-server.use("/login-secure", brokenAuthSecure, async (req, res) => {
+server.post("/login-secure", brokenAuthSecure, async (req, res) => {
   const { username, password } = req.body;
   const user = DB_USER.find((user) => user.username === username);
   if (!user) {
@@ -65,6 +65,25 @@ server.use("/login-secure", brokenAuthSecure, async (req, res) => {
   res.json({
     token: generateJWT(username, user.email),
   });
+});
+
+server.get("/comments", (req, res) => {
+  res.json(DB_COMMENTS);
+});
+
+server.post("/comments", (req, res) => {
+  const { text } = req.body;
+  DB_COMMENTS.push({
+    id: DB_COMMENTS.length + 1,
+    text,
+  });
+  res.json({ message: "Comment added" });
+});
+
+server.delete("/comments", (req, res) => {
+  DB_COMMENTS.splice(0, DB_COMMENTS.length);
+  DB_COMMENTS.push(...initalComments);
+  res.json({ message: "Comments reset" });
 });
 
 server.use(errorHandler);
