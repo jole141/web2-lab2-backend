@@ -30,9 +30,6 @@ server.use(
     resave: false,
     saveUninitialized: true,
     secret: SESSION_SECRET,
-    cookie: {
-      httpOnly: false,
-    },
   })
 );
 server.use(express.json());
