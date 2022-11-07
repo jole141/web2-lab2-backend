@@ -28,13 +28,10 @@ const server: Express = express();
 server.use(
   session({
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     secret: SESSION_SECRET,
     cookie: {
-      maxAge: 1000 * 60 * 60,
-      sameSite: "none",
-      // httpOnly: false,
-      secure: true,
+      httpOnly: false,
     },
   })
 );
