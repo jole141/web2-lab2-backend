@@ -1,4 +1,5 @@
 import express, { Express } from "express";
+import session from "express-session";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import cors from "cors";
@@ -7,14 +8,17 @@ import { errorHandler } from "./src/middlewares/error.middleware";
 import { DB_COMMENTS, DB_USER, initalComments } from "./src/datasource";
 import { addFailedAttempt, generateJWT } from "./src/utils";
 import { brokenAuthSecure } from "./src/middlewares/broken-auth-secure.middleware";
+import {sessionCheck} from "./src/middlewares/sessionCheck.middleware";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN_URL = process.env.CLIENT_ORIGIN_URL;
+const SESSION_SECRET = process.env.TOKEN_SECRET || ".";
 
 const server: Express = express();
 
+server.use(session({secret: SESSION_SECRET, resave: false, saveUninitialized: true}));
 server.use(express.json());
 server.set("json spaces", 2);
 server.use((req, res, next) => {
@@ -24,14 +28,39 @@ server.use((req, res, next) => {
 server.use(nocache());
 server.use(
   cors({
-    origin: CLIENT_ORIGIN_URL,
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Authorization", "Content-Type"],
     maxAge: 86400,
   })
 );
 
-server.post("/login", async (req, res) => {
+server.get("/api/transfer", sessionCheck, async (req, res) => {
+    console.log("TRANSFER");
+    const { to, amount } = req.query;
+    const fromUser = DB_USER.find((user) => user.username === req.session.user);
+    const toUser = DB_USER.find((user) => user.email === to);
+    if (!fromUser || !toUser) {
+        res.status(400).json({ message: "Bad request" });
+        return;
+    }
+    if (fromUser.balance < parseInt(amount as string, 10)) {
+        res.status(400).json({ message: "Insufficient balance" });
+        return;
+    }
+    fromUser.balance -= parseInt(amount as string, 10);
+    toUser.balance += parseInt(amount as string, 10);
+    res.json({
+        message: "Transfer successfully",
+    });
+});
+
+server.post('/api/login1', function (req, res, next) {
+  req.session.user = "test";
+  res.send("ok")
+});
+
+server.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   const user = DB_USER.find((user) => user.username === username);
   if (!user) {
@@ -43,12 +72,23 @@ server.post("/login", async (req, res) => {
     res.status(401).json({ message: "Bad credentials" });
     return;
   }
+
+  req.session.user = username;
+
   res.json({
-    token: generateJWT(username, user.email),
+    user: username,
   });
 });
 
-server.post("/login-secure", brokenAuthSecure, async (req, res) => {
+server.get('/reset-balance', function (req, res, next) {
+    DB_USER.forEach((user) => {
+        user.balance = 10000;
+    }
+    );
+    res.send("ok")
+});
+
+server.post("/api/login-secure", brokenAuthSecure, async (req, res) => {
   const { username, password } = req.body;
   const user = DB_USER.find((user) => user.username === username);
   if (!user) {
@@ -62,9 +102,20 @@ server.post("/login-secure", brokenAuthSecure, async (req, res) => {
     res.status(401).json({ message: "Bad credentials" });
     return;
   }
+  req.session.user = username;
+
   res.json({
-    token: generateJWT(username, user.email),
+    user: username,
   });
+});
+
+server.get("/api/logout", function (req, res, next) {
+    req.session.destroy();
+    res.json({ message: "Logout successfully" });
+});
+
+server.get("/users", (req, res) => {
+    res.json(DB_USER);
 });
 
 server.get("/comments", (req, res) => {

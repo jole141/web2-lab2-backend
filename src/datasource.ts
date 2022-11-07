@@ -18,6 +18,7 @@ export let DB_USER: User[] = [
     username: "jjurenic",
     email: "jjurenic@mail.com",
     password: "$2b$10$pQ2ACLjPHUmOcCO8trvo0eBUpLJkJlTWUweZGCci/lycdZhu2dAe6", //password123
+    balance: 10000,
   },
   {
     id: 2,
@@ -25,6 +26,7 @@ export let DB_USER: User[] = [
     username: "admin",
     email: "admin@admin.com",
     password: "$2b$10$pQ2ACLjPHUmOcCO8trvo0e/Ezown75QBxdr1RMhZdJHlnnlQEHRgG", //admin
+    balance: 10000,
   },
   {
     id: 3,
@@ -32,6 +34,7 @@ export let DB_USER: User[] = [
     username: "test",
     email: "test@test.com",
     password: "$2b$10$pQ2ACLjPHUmOcCO8trvo0eSaKCLzMIeqh/DUvwWjgDAabnWerzQzu", //sifra123
+    balance: 10000,
   },
 ];
 
