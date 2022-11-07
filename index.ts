@@ -25,6 +25,8 @@ const server: Express = express();
   session({ secret: SESSION_SECRET, resave: false, saveUninitialized: true })
 );*/
 
+server.set("trust proxy", 1);
+
 server.use(
   cors({
     origin: [CLIENT_ORIGIN_URL, HACKER_ORIGIN_URL],
@@ -34,9 +36,13 @@ server.use(
 );
 server.use(
   session({
+    keys: [SESSION_SECRET],
     name: "session",
     secret: SESSION_SECRET,
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    sameSite: "none",
+    secure: true,
+    maxAge: 24 * 60 * 60 * 1000,
   })
 );
 server.use(express.json());
