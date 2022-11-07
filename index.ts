@@ -26,6 +26,13 @@ const server: Express = express();
 );*/
 
 server.use(
+  cors({
+    origin: CLIENT_ORIGIN_URL,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+server.use(
   session({
     resave: false,
     saveUninitialized: true,
@@ -39,13 +46,6 @@ server.use((req, res, next) => {
   next();
 });
 server.use(nocache());
-server.use(
-  cors({
-    origin: [CLIENT_ORIGIN_URL, HACKER_ORIGIN_URL],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
 
 server.get("/api/transfer", sessionCheck, async (req, res) => {
   const { to, amount } = req.query;
