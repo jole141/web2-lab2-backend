@@ -27,16 +27,19 @@ const server: Express = express();
 
 server.use(
   cors({
-    origin: CLIENT_ORIGIN_URL,
+    origin: [CLIENT_ORIGIN_URL, HACKER_ORIGIN_URL],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 server.use(
   session({
-    resave: false,
-    saveUninitialized: true,
     secret: SESSION_SECRET,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      httpOnly: false,
+    },
   })
 );
 server.use(express.json());
