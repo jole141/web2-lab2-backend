@@ -21,8 +21,22 @@ const SESSION_SECRET = process.env.TOKEN_SECRET || ".";
 
 const server: Express = express();
 
-server.use(
+/*server.use(
   session({ secret: SESSION_SECRET, resave: false, saveUninitialized: true })
+);*/
+
+server.use(
+  session({
+    resave: false,
+    saveUninitialized: false,
+    secret: SESSION_SECRET,
+    cookie: {
+      maxAge: 1000 * 60 * 60,
+      sameSite: "none",
+      // httpOnly: false,
+      secure: true,
+    },
+  })
 );
 server.use(express.json());
 server.set("json spaces", 2);
@@ -40,7 +54,6 @@ server.use(
 );
 
 server.get("/api/transfer", sessionCheck, async (req, res) => {
-  console.log("TRANSFER");
   const { to, amount } = req.query;
   const fromUser = DB_USER.find((user) => user.username === req.session.user);
   const toUser = DB_USER.find((user) => user.email === to);
