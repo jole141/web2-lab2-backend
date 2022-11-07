@@ -1,5 +1,5 @@
 import express, { Express } from "express";
-import session from "express-session";
+import session from "cookie-session";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import cors from "cors";
@@ -34,12 +34,9 @@ server.use(
 );
 server.use(
   session({
+    name: "session",
     secret: SESSION_SECRET,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-      httpOnly: false,
-    },
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
   })
 );
 server.use(express.json());
