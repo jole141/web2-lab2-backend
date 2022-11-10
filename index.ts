@@ -39,7 +39,7 @@ server.use(
     name: "session",
     secret: SESSION_SECRET,
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    httpOnly: false,
+    sameSite: "none",
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
