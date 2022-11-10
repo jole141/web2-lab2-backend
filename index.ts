@@ -26,12 +26,27 @@ const server: Express = express();
 );*/
 
 server.set("trust proxy", 1);
+// cors({
+//   origin: [CLIENT_ORIGIN_URL, HACKER_ORIGIN_URL],
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+//   credentials: true,
+// })
+
+const allowedOrigins = [CLIENT_ORIGIN_URL];
 
 server.use(
   cors({
-    origin: [CLIENT_ORIGIN_URL, HACKER_ORIGIN_URL],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    origin: function (origin, callback) {
+      // allow requests with no origin
+      // (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        var msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
   })
 );
 server.use(
