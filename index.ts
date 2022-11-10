@@ -6,9 +6,12 @@ import cors from "cors";
 import nocache from "nocache";
 import { errorHandler } from "./src/middlewares/error.middleware";
 import { DB_COMMENTS, DB_USER, initalComments } from "./src/datasource";
-import { addFailedAttempt, generateJWT } from "./src/utils";
+import { addFailedAttempt } from "./src/utils";
 import { brokenAuthSecure } from "./src/middlewares/broken-auth-secure.middleware";
 import { sessionCheck } from "./src/middlewares/sessionCheck.middleware";
+import csurf from "csurf";
+import cookieParser from "cookie-parser";
+import { success } from "concurrently/dist/src/defaults";
 
 dotenv.config();
 
@@ -21,19 +24,15 @@ const SESSION_SECRET = process.env.TOKEN_SECRET || ".";
 
 const server: Express = express();
 
-/*server.use(
-  session({ secret: SESSION_SECRET, resave: false, saveUninitialized: true })
-);*/
-
 server.set("trust proxy", 1);
-
 server.use(
   cors({
-    origin: [CLIENT_ORIGIN_URL],
+    origin: [CLIENT_ORIGIN_URL, HACKER_ORIGIN_URL],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
+server.use(cookieParser());
 server.use(
   session({
     keys: [SESSION_SECRET],
@@ -44,6 +43,7 @@ server.use(
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
+const csrfProtect = csurf({ cookie: true });
 server.use(express.json());
 server.set("json spaces", 2);
 server.use((req, res, next) => {
@@ -51,6 +51,10 @@ server.use((req, res, next) => {
   next();
 });
 server.use(nocache());
+
+server.get("/csrf-token", csrfProtect, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 server.get("/api/transfer", sessionCheck, async (req, res) => {
   const { to, amount } = req.query;
@@ -67,9 +71,33 @@ server.get("/api/transfer", sessionCheck, async (req, res) => {
   fromUser.balance -= parseInt(amount as string, 10);
   toUser.balance += parseInt(amount as string, 10);
   res.json({
-    message: "Transfer successfully",
+    message: `Successfully transferred ${amount} to ${to}`,
   });
 });
+
+server.get(
+  "/api/transfer-secure",
+  sessionCheck,
+  csrfProtect,
+  async (req, res) => {
+    const { to, amount } = req.query;
+    const fromUser = DB_USER.find((user) => user.username === req.session.user);
+    const toUser = DB_USER.find((user) => user.email === to);
+    if (!fromUser || !toUser) {
+      res.status(400).json({ message: "Bad request" });
+      return;
+    }
+    if (fromUser.balance < parseInt(amount as string, 10)) {
+      res.status(400).json({ message: "Insufficient balance" });
+      return;
+    }
+    fromUser.balance -= parseInt(amount as string, 10);
+    toUser.balance += parseInt(amount as string, 10);
+    res.json({
+      message: `Successfully transferred ${amount} to ${to}`,
+    });
+  }
+);
 
 server.post("/api/login1", function (req, res, next) {
   req.session.user = "test";
