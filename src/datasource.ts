@@ -15,8 +15,8 @@ export let DB_USER: User[] = [
   {
     id: 1,
     name: "Josip Jurenic",
-    username: "jjurenic",
-    email: "jjurenic@mail.com",
+    username: "hacker",
+    email: "hacker@mail.com",
     password: "$2b$10$pQ2ACLjPHUmOcCO8trvo0eBUpLJkJlTWUweZGCci/lycdZhu2dAe6", //password123
     balance: 10000,
   },
