@@ -40,6 +40,7 @@ server.use(
     secret: SESSION_SECRET,
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
     sameSite: "none",
+    secure: true,
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
