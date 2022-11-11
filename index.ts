@@ -11,7 +11,7 @@ import { brokenAuthSecure } from "./src/middlewares/broken-auth-secure.middlewar
 import { sessionCheck } from "./src/middlewares/sessionCheck.middleware";
 import csurf from "csurf";
 import cookieParser from "cookie-parser";
-import { success } from "concurrently/dist/src/defaults";
+import bodyParser from "body-parser";
 
 dotenv.config();
 
@@ -41,6 +41,7 @@ server.use(
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
     sameSite: "none",
     secure: true,
+    httpOnly: false,
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
@@ -52,10 +53,6 @@ server.use((req, res, next) => {
   next();
 });
 server.use(nocache());
-
-server.get("/csrf-token", csrfProtect, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
 
 server.get("/api/transfer", sessionCheck, async (req, res) => {
   const { to, amount } = req.query;
@@ -76,29 +73,24 @@ server.get("/api/transfer", sessionCheck, async (req, res) => {
   });
 });
 
-server.get(
-  "/api/transfer-secure",
-  sessionCheck,
-  csrfProtect,
-  async (req, res) => {
-    const { to, amount } = req.query;
-    const fromUser = DB_USER.find((user) => user.username === req.session.user);
-    const toUser = DB_USER.find((user) => user.email === to);
-    if (!fromUser || !toUser) {
-      res.status(400).json({ message: "Bad request" });
-      return;
-    }
-    if (fromUser.balance < parseInt(amount as string, 10)) {
-      res.status(400).json({ message: "Insufficient balance" });
-      return;
-    }
-    fromUser.balance -= parseInt(amount as string, 10);
-    toUser.balance += parseInt(amount as string, 10);
-    res.json({
-      message: `Successfully transferred ${amount} to ${to}`,
-    });
+server.post("/api/transfer-secure", csrfProtect, async (req, res) => {
+  const { to, amount } = req.query;
+  const fromUser = DB_USER.find((user) => user.username === req.session.user);
+  const toUser = DB_USER.find((user) => user.email === to);
+  if (!fromUser || !toUser) {
+    res.status(400).json({ message: "Bad request" });
+    return;
   }
-);
+  if (fromUser.balance < parseInt(amount as string, 10)) {
+    res.status(400).json({ message: "Insufficient balance" });
+    return;
+  }
+  fromUser.balance -= parseInt(amount as string, 10);
+  toUser.balance += parseInt(amount as string, 10);
+  res.json({
+    message: `Successfully transferred ${amount} to ${to}`,
+  });
+});
 
 server.post("/api/login1", function (req, res, next) {
   req.session.user = "test";
