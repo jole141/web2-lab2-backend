@@ -11,7 +11,6 @@ import { brokenAuthSecure } from "./src/middlewares/broken-auth-secure.middlewar
 import { sessionCheck } from "./src/middlewares/sessionCheck.middleware";
 import csurf from "csurf";
 import cookieParser from "cookie-parser";
-import bodyParser from "body-parser";
 
 dotenv.config();
 
